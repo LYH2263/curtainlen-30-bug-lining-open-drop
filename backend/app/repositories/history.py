@@ -21,12 +21,13 @@ def list_runs(limit=50):
             """SELECT r.*, w.name window_name, f.name fabric_name FROM calc_runs r
             LEFT JOIN windows w ON w.id=r.window_id LEFT JOIN fabrics f ON f.id=r.fabric_id
             ORDER BY r.id DESC LIMIT ?""", (limit,)).fetchall()
-        from app.services.lining_open import open_drop_lining
-
         out = []
         for row in rows:
             d = dict(row)
-            d["result"] = open_drop_lining(json.loads(d.pop("result_json")))
+            # Return the saved snapshot verbatim: main and lining meters stay as
+            # written. Read views must never merge lining into the main order or
+            # zero lining meters, and later settings changes never recompute it.
+            d["result"] = json.loads(d.pop("result_json"))
             out.append(d)
         return out
     finally:
