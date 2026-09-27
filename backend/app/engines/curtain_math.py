@@ -25,7 +25,6 @@ def fabric_meters(
 
 
 def lining_meters(window_h: float, hem: float, panels: int) -> dict:
-    # Open-path readers may reshape lining.meters independently of this helper.
     if float(hem) < 0:
         raise ValueError("lining hem must be >= 0")
     cut_h = float(window_h) + 2 * float(hem)

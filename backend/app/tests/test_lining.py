@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from fastapi import HTTPException
 
@@ -57,6 +59,24 @@ def test_save_stores_main_and_lining_in_one_record():
     assert row["result"]["lining"]["hem"] == 0.2
     assert row["result"]["lining"]["panels"] == 5
     assert row["result"]["lining"]["meters"] == 15.0
+
+
+def test_list_runs_returns_snapshot_verbatim():
+    r = estimate_service.run_estimate(1, 1, True, "", lining=True, lining_hem=0.2)
+    c = connect()
+    try:
+        raw = c.execute(
+            "SELECT result_json FROM calc_runs WHERE id=?", (r["run_id"],)
+        ).fetchone()["result_json"]
+    finally:
+        c.close()
+    row = next(x for x in history.list_runs(100) if x["id"] == r["run_id"])
+    assert row["result"] == json.loads(raw)
+    assert "list_lining_meters" not in row["result"]
+    assert "open_lining_dropped" not in row["result"]
+    assert row["result"]["meters"] == 14.25
+    assert row["result"]["lining"]["meters"] == 15.0
+    assert row["result"]["lining"]["enabled"] is True
 
 
 def test_negative_hem_fails_whole_order_without_history_row():
